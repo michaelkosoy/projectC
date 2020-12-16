@@ -1,19 +1,36 @@
 #include <stdio.h>
+#pragma warning(disable : 4996)
 #include <stdlib.h>
 #include <string.h>
-#include "Header.h"
+#include "objects.h"
 #define INITIAL_ID 1
+#define _CRT_SECURE_NO_WARNINGS
+#define BOOL int
+#define TRUE 1
+#define FALSE 0
 
+///List function declaration
+NodesList makeEmptyNodeList();
 List makeEmptyList();
+void insertDataToEndList(NodesList *lst, char* ch);
 int isEmptyList(List *lst);
 void printApartmentList(List lst);
-char *timeToString(time_t rawtime);
-void addApartment(char *address, int price, short numOfRooms, unsigned short day, unsigned short month, unsigned int year);
+void checkMemoryAllocation(void *ptr);
+ListNode *createNewListNode(char* ch, ListNode *next);
+void insertDataToEndList(NodesList *lst, char* ch);
 void addToList(List *lst, Apartment *apt);
+void insertNodeToEndList(NodesList *lst, ListNode *newTail);
+//Apartment function declaration
 ApartmentNode *createApartmentNode(Apartment *apt, ApartmentNode *prev, ApartmentNode*next);
 void removeApartment(ApartmentNode *apt);
 void buyApartment(unsigned int apt_id);
 void findApartmentsByDate(unsigned short day, unsigned short month, unsigned short year);
+void addApartment(char *address, int price, short numOfRooms, unsigned short day, unsigned short month, unsigned int year);
+//Parcing related function declaration
+char* requestType(char* userRequest);
+NodesList requestTypeFind(char* input);	
+char *timeToString(time_t rawtime);
+
 
 
 
@@ -40,7 +57,51 @@ int main() {
 	buyApartment(10);
 	printf("There should be no change in the list\n");
 	printApartmentList(apartmentList);
+	
+	printf("Enter a request");
+	char str[100];
+	gets(str);
+	char str2[100];
+	strcpy(str2, str);
+	char* result = requestType(str);
+	printf("%s", result);
+	NodesList res = makeEmptyNodeList();
+	/*res = requestTypeFind(str2);
+	ListNode* curr = res.head;
+	while (curr->data != NULL) {
+		printf("%s", curr->data);
+		curr = curr->next;
+	}*/
 	return 0;
+}
+NodesList requestTypeFind(char* input) {	//Returns list of strings: MinNumRooms 3 MaxNumRooms 5 
+	NodesList requests = makeEmptyNodeList();
+	char *found;
+	found = strtok(input, "-");
+	found = strtok(NULL, "-");
+	while (found)
+	{
+		found = strtok(NULL, " ");
+		insertDataToEndList(&requests, found);	//WIP insertDataToEndList
+		found = strtok(NULL, "-");
+		insertDataToEndList(&requests, found);
+	}
+	return requests;
+}
+int requestTypeBuy(char* input) {	//Returns number of apt to remove from db 
+	char *found;
+	found = strtok(input, " ");	// returns buy-apt
+	found = strtok(NULL, "-");	//contains apt number as a string
+	int aptNum;
+	sscanf(found, "%d", &aptNum);	//convert to int
+	return aptNum;
+}
+
+char* requestType(char* userRequest) {	// Return requestType add/buy/find
+	char *found;
+	found = strtok(userRequest, "-");
+	if (found == NULL)return(NULL);
+	return found;
 }
 
 void addApartment(char *address, int price, short numOfRooms, unsigned short day, unsigned short month, unsigned int year) {
@@ -67,7 +128,44 @@ void addToList(List *lst, Apartment *apt) {
 		lst->tail = aptNode;
 	}
 }
-
+void insertDataToEndList(NodesList *lst, char* ch)
+{
+	ListNode *newTail;
+	newTail = createNewListNode(ch, NULL);
+	insertNodeToEndList(lst, newTail);
+}
+void insertNodeToEndList(NodesList *lst, ListNode *newTail)
+{
+	if (isEmptyNodeList(lst) == TRUE)
+	{
+		lst->head = newTail;
+		lst->tail = newTail;
+	}
+	else
+	{
+		lst->tail->next = newTail;
+		lst->tail = newTail;
+	}
+}
+ListNode *createNewListNode(char* ch, ListNode *next)	//WIP
+{
+	ListNode *curr;
+	curr = (ListNode *)malloc(sizeof(ListNode*));
+	checkMemoryAllocation(curr);
+	curr->data = (char *)malloc(sizeof(char*));
+	checkMemoryAllocation(curr->data);
+	*curr->data = ch;
+	curr->next = next;
+	return curr;
+}
+void checkMemoryAllocation(void *ptr)
+{
+	if (ptr == NULL)
+	{
+		printf("Not enough memory");
+		exit(1);
+	}
+}
 ApartmentNode *createApartmentNode(Apartment *apt, ApartmentNode *prev, ApartmentNode*next) {
 	ApartmentNode *aptNode = (ApartmentNode *)malloc(sizeof(ApartmentNode));
 	aptNode->apt = apt;
@@ -180,8 +278,16 @@ List makeEmptyList() {
 	lst.tail = NULL;
 	return lst;
 }
-
+NodesList makeEmptyNodeList() {
+	NodesList lst;
+	lst.head = NULL;
+	lst.tail = NULL;
+	return lst;
+}
 int isEmptyList(List *lst) {
+	return lst->head == NULL || lst->tail == NULL;
+}
+int isEmptyNodeList(NodesList *lst) {
 	return lst->head == NULL || lst->tail == NULL;
 }
 

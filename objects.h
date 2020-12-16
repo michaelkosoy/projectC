@@ -30,7 +30,14 @@ typedef struct list {
 	ApartmentNode *head;
 	ApartmentNode *tail;
 }List;
-
+typedef struct list_node {
+	char *data;
+	struct list_node *next;
+}ListNode;
+typedef struct nodes_list {
+	struct list_node *head;
+	struct list_node *tail;
+}NodesList;
 typedef struct command {	// for maagar B
 	char *command;
 	struct command *next;

@@ -20,7 +20,10 @@ ListNode *createNewListNode(char* ch, ListNode *next);
 void insertDataToEndList(NodesList *lst, char* ch);
 void addToList(List *lst, Apartment *apt);
 void insertNodeToEndList(NodesList *lst, ListNode *newTail);
+int isEmptyNodeList(NodesList *lst);
 //Apartment function declaration
+void swapApt(ApartmentNode* first, ApartmentNode* second);
+void sortApartmentList(List *apartmentList);
 ApartmentNode *createApartmentNode(Apartment *apt, ApartmentNode *prev, ApartmentNode*next);
 void removeApartment(ApartmentNode *apt);
 void buyApartment(unsigned int apt_id);
@@ -40,9 +43,12 @@ static unsigned int current_id = INITIAL_ID;
 
 int main() {
 	apartmentList = makeEmptyList();
-	addApartment("Aza 25, Tel Aviv", 100000, 5, 1, 12, 2020);
-	addApartment("37 Tavistock, Saint Pancras, London", 200000, 40, 16, 12, 2020);
-	addApartment("HaBrosh 49, Kfar Daniel", 4000000, 7, 1, 2, 2021);
+	addApartment("Aza 25, Tel Aviv", 5000000, 5, 1, 12, 2020);
+	addApartment("37 Tavistock, Saint Pancras, London", 2000000, 40, 16, 12, 2020);
+	addApartment("HaBrosh 49, Kfar Daniel", 1000000, 7, 1, 2, 2021);
+	printApartmentList(apartmentList);
+	printf("Apartments should be sorted by price \n");
+	sortApartmentList(&apartmentList);
 	printApartmentList(apartmentList);
 	findApartmentsByDate(16, 12, 2020);
 	buyApartment(2);
@@ -57,8 +63,12 @@ int main() {
 	buyApartment(10);
 	printf("There should be no change in the list\n");
 	printApartmentList(apartmentList);
+
+	sortApartmentList(&apartmentList);
+	printApartmentList(apartmentList);
+
 	
-	printf("Enter a request");
+	/*printf("Enter a request");
 	char str[100];
 	gets(str);
 	char str2[100];
@@ -66,25 +76,55 @@ int main() {
 	char* result = requestType(str);
 	printf("%s", result);
 	NodesList res = makeEmptyNodeList();
-	/*res = requestTypeFind(str2);
+	res = requestTypeFind(str2);
 	ListNode* curr = res.head;
 	while (curr->data != NULL) {
 		printf("%s", curr->data);
 		curr = curr->next;
-	}*/
+	}
+	*/
 	return 0;
+}
+void sortApartmentList(List *start) {
+	ApartmentNode* curr = start->head;
+	ApartmentNode* lptr = NULL;
+	if (curr == NULL)
+		return;
+	int swapped;
+	ApartmentNode* ptr1;
+	do
+	{
+		swapped = 0;
+		ptr1 = curr;
+		while (ptr1->next != lptr) {
+			if (ptr1->apt->price > ptr1->next->apt->price) {
+				swapApt(ptr1, ptr1->next);
+				swapped = 1;
+			}
+			ptr1 = ptr1->next;
+		}
+		lptr = ptr1;
+	}
+	while (swapped);
+}
+void swapApt(ApartmentNode* first, ApartmentNode* second) {	//swap apt values
+	ApartmentNode* temp = (ApartmentNode*)malloc(sizeof(ApartmentNode*));
+	temp->apt = first->apt;
+	first->apt = second->apt;
+	second->apt = temp->apt;
 }
 NodesList requestTypeFind(char* input) {	//Returns list of strings: MinNumRooms 3 MaxNumRooms 5 
 	NodesList requests = makeEmptyNodeList();
 	char *found;
 	found = strtok(input, "-");
 	found = strtok(NULL, "-");
+	found = strtok(NULL, " ");
 	while (found)
 	{
-		found = strtok(NULL, " ");
-		insertDataToEndList(&requests, found);	//WIP insertDataToEndList
+		insertDataToEndList(&requests, found);
 		found = strtok(NULL, "-");
 		insertDataToEndList(&requests, found);
+		found = strtok(NULL, " ");
 	}
 	return requests;
 }
@@ -150,11 +190,13 @@ void insertNodeToEndList(NodesList *lst, ListNode *newTail)
 ListNode *createNewListNode(char* ch, ListNode *next)	//WIP
 {
 	ListNode *curr;
-	curr = (ListNode *)malloc(sizeof(ListNode*));
+	curr = (ListNode *)malloc(sizeof(ListNode));
 	checkMemoryAllocation(curr);
-	curr->data = (char *)malloc(sizeof(char*));
+	int size = strlen(ch);
+	curr->data = (char *)malloc(sizeof(char)*size+1);
 	checkMemoryAllocation(curr->data);
-	*curr->data = ch;
+	strcpy(curr->data, ch);
+	curr->data[size] = '\0';
 	curr->next = next;
 	return curr;
 }

@@ -28,12 +28,15 @@ ApartmentNode *createApartmentNode(Apartment *apt, ApartmentNode *prev, Apartmen
 void removeApartment(ApartmentNode *apt);
 void buyApartment(unsigned int apt_id);
 void findApartmentsByDate(unsigned short day, unsigned short month, unsigned short year);
+void printFindParameters(NodesList* paramList, List apartmentList, List apartmentListSorted);
 void addApartment(char *address, int price, short numOfRooms, unsigned short day, unsigned short month, unsigned int year);
 //Parcing related function declaration
 char* requestType(char* userRequest);
+void addAptFromStr(char* str);	//adds apartment to list from string input (add-apt)
+void requestTypeBuy(char* input);//buys apt->removes from list 
 NodesList requestTypeFind(char* input);	
 char *timeToString(time_t rawtime);
-
+void deleteApartment(List *apt, unsigned int days, time_t rawtime);
 
 
 
@@ -42,14 +45,15 @@ static unsigned int current_id = INITIAL_ID;
 
 
 int main() {
+	time_t rawtime = time(0);
 	apartmentList = makeEmptyList();
 	addApartment("Aza 25, Tel Aviv", 5000000, 5, 1, 12, 2020);
 	addApartment("37 Tavistock, Saint Pancras, London", 2000000, 40, 16, 12, 2020);
-	addApartment("HaBrosh 49, Kfar Daniel", 1000000, 7, 1, 2, 2021);
+	addApartment("HaBrosh 49, Kfar Daniel", 1000000, 7, 25, 12, 2020);
 	printApartmentList(apartmentList);
-	printf("Apartments should be sorted by price \n");
-	sortApartmentList(&apartmentList);
-	printApartmentList(apartmentList);
+	//printf("Apartments should be sorted by price \n");
+	//sortApartmentList(&apartmentList);
+	//printApartmentList(apartmentList);
 	findApartmentsByDate(16, 12, 2020);
 	buyApartment(2);
 	printf("Apartment with id #2 should be removed from the list\n");
@@ -63,11 +67,17 @@ int main() {
 	buyApartment(10);
 	printf("There should be no change in the list\n");
 	printApartmentList(apartmentList);
-
-	sortApartmentList(&apartmentList);
+	printf("------------------------------------------------");
 	printApartmentList(apartmentList);
-
-	
+	deleteApartment(&apartmentList,4,rawtime);
+	//sortApartmentList(&apartmentList);
+	printApartmentList(apartmentList);
+	/*char str[100];
+	gets(str);
+	requestTypeBuy(str);
+	printApartmentList(apartmentList);
+	printf("There should be new apt\n");
+	*/
 	/*printf("Enter a request");
 	char str[100];
 	gets(str);
@@ -113,6 +123,25 @@ void swapApt(ApartmentNode* first, ApartmentNode* second) {	//swap apt values
 	first->apt = second->apt;
 	second->apt = temp->apt;
 }
+void printFindParameters(NodesList* paramList,List apartmentList,List apartmentListSorted) {// WIP
+	ListNode* curr = paramList->head;
+	ApartmentNode* aptList = apartmentList.head;
+	ApartmentNode* aptListSorted = apartmentListSorted.head;
+	if (paramList->tail->data == 's') {	//sorted ascending
+		while (aptListSorted != NULL) {
+			if (strstr(curr->data, "MaxPrice") != NULL) {	//contains "MaxPrice"
+				curr = curr->next;
+				int price = curr->data;
+			}
+		}
+		if (paramList->tail->data == 'sr') {	//sorted descending
+
+		}
+		else {	//not sorted
+
+		}
+	}
+}
 NodesList requestTypeFind(char* input) {	//Returns list of strings: MinNumRooms 3 MaxNumRooms 5 
 	NodesList requests = makeEmptyNodeList();
 	char *found;
@@ -128,13 +157,13 @@ NodesList requestTypeFind(char* input) {	//Returns list of strings: MinNumRooms 
 	}
 	return requests;
 }
-int requestTypeBuy(char* input) {	//Returns number of apt to remove from db 
+void requestTypeBuy(char* input) {	//removes apt from list from input(buy -apt 6)
 	char *found;
 	found = strtok(input, " ");	// returns buy-apt
 	found = strtok(NULL, "-");	//contains apt number as a string
-	int aptNum;
+	unsigned int aptNum;
 	sscanf(found, "%d", &aptNum);	//convert to int
-	return aptNum;
+	buyApartment(aptNum);
 }
 
 char* requestType(char* userRequest) {	// Return requestType add/buy/find
@@ -143,7 +172,28 @@ char* requestType(char* userRequest) {	// Return requestType add/buy/find
 	if (found == NULL)return(NULL);
 	return found;
 }
-
+void addAptFromStr(char* input) {
+	char *found;
+	char* adress;
+	unsigned short day, month;
+	unsigned int year;
+	int price;
+	found = strtok(input, " ");
+	found = strtok(NULL, "\"");	//contains adress as a string
+	adress = found;
+	short roomNum;
+	found = strtok(NULL, " ");
+	sscanf(found, "%d", &price);	//convert to int
+	found = strtok(NULL, " ");
+	sscanf(found, "%hu", &roomNum);	
+	found = strtok(NULL, " ");
+	sscanf(found, "%hu", &day);	
+	found = strtok(NULL, " ");
+	sscanf(found, "%hu", &month);	
+	found = strtok(NULL, " ");
+	sscanf(found, "%u", &year);
+	addApartment(adress, price, roomNum, day, month, year);
+}
 void addApartment(char *address, int price, short numOfRooms, unsigned short day, unsigned short month, unsigned int year) {
 	Apartment *apt = (Apartment *)malloc(sizeof(Apartment));
 	apt->id = current_id++;
@@ -187,7 +237,7 @@ void insertNodeToEndList(NodesList *lst, ListNode *newTail)
 		lst->tail = newTail;
 	}
 }
-ListNode *createNewListNode(char* ch, ListNode *next)	//WIP
+ListNode *createNewListNode(char* ch, ListNode *next)	
 {
 	ListNode *curr;
 	curr = (ListNode *)malloc(sizeof(ListNode));
@@ -215,7 +265,30 @@ ApartmentNode *createApartmentNode(Apartment *apt, ApartmentNode *prev, Apartmen
 	aptNode->next = next;
 	return aptNode;
 }
-
+void deleteApartment(List *apt, unsigned int days, time_t rawtime) {
+	ApartmentNode *aptNode = apt->head;
+	int currDay, currMonth, currYear;
+	char* date = timeToString(rawtime);
+	char* found;
+	printf("%s", date);
+	found = strtok(date, ".");
+	sscanf(found, "%d", &currDay);
+	found = strtok(NULL, ".");
+	sscanf(found, "%d", &currMonth);
+	found = strtok(NULL, ".");
+	sscanf(found, "%d", &currYear);
+	while (aptNode != NULL) {
+		if (difftime(rawtime, aptNode->apt->systemTime) / 86400 < days) {
+			ApartmentNode *after = aptNode->prev;
+			ApartmentNode *toDelete;
+			toDelete = aptNode;
+			aptNode->next = toDelete->next;
+			aptNode = aptNode->next;
+			removeApartment(toDelete);
+		}
+		else aptNode = aptNode->next;
+	}
+}
 void buyApartment(unsigned int apt_id) {
 	ApartmentNode *aptNode = apartmentList.head;
 	while (aptNode != NULL && aptNode->apt->id < apt_id) {
